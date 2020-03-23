@@ -27,7 +27,7 @@ ACLOCAL_AMFLAGS		= -I m4
 AM_CPPFLAGS		=
 AM_LDFLAGS		=
 
-SUBDIRS			= . gnulib-tests
+SUBDIRS			= .
 DIST_SUBDIRS		= $(SUBDIRS)
 EXTRA_DIST		=
 
@@ -46,8 +46,7 @@ EXTRA_LTLIBRARIES	=
 # Using 'cd' in backquotes may print the directory name, use this instead:
 lt__cd		= CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 
-git_version_gen = '$(SHELL)' '$(aux_dir)/git-version-gen' '--fallback' '$(VERSION)' '.tarball-version'
-rebuild = rebuild=:; revision=`$(lt__cd) $(srcdir) && $(git_version_gen) | $(SED) 's|-.*$$||'`
+rebuild = rebuild=:; revision=`echo "2.4.6" | $(SED) 's|-.*$$||'`
 
 
 # ---------- #
@@ -59,7 +58,6 @@ SCRIPT_ENV	= GREP='$(GREP)' SED='$(SED)'
 build_scripts	= $(srcdir)/$(aux_dir)/announce-gen \
 		  $(srcdir)/$(aux_dir)/do-release-commit-and-tag \
 		  $(srcdir)/$(aux_dir)/gendocs.sh \
-		  $(srcdir)/$(aux_dir)/git-version-gen \
 		  $(srcdir)/$(aux_dir)/gnu-web-doc-update \
 		  $(srcdir)/$(aux_dir)/gnupload \
 		  $(srcdir)/$(aux_dir)/useless-if-before-free \
@@ -333,9 +331,6 @@ EXTRA_DIST     += $(lt_aclocal_m4) \
 		  $(lt_obsolete_m4) \
 		  $(stamp_mk)
 
-$(lt_Makefile_in): $(lt_Makefile_am) $(lt_aclocal_m4)
-	$(AM_V_GEN)cd '$(srcdir)/$(ltdl_dir)' && $(AUTOMAKE) Makefile
-
 # Don't let unused scripts leak into the libltdl Makefile
 $(stamp_mk): $(lt_Makefile_in)
 	$(AM_V_at)T='$(srcdir)/$(aux_dir)/Makefile.tmp'; \
@@ -367,65 +362,12 @@ lt_aclocal_m4_deps = \
 
 lt_configure_deps = $(lt_aclocal_m4) $(lt_aclocal_m4_deps)
 
-$(lt_aclocal_m4): $(lt_aclocal_m4_deps)
-	$(AM_V_GEN)cd '$(srcdir)/$(ltdl_dir)' && $(ACLOCAL) -I ../m4
-
 $(lt_configure): $(lt_configure_deps)
 	$(AM_V_GEN)cd '$(srcdir)/$(ltdl_dir)' && $(AUTOCONF)
 
 $(lt_config_h_in): $(lt_configure_deps)
 	$(AM_V_GEN)cd '$(srcdir)/$(ltdl_dir)' && $(AUTOHEADER)
 	$(AM_V_at)touch '$@'
-
-
-## -------------- ##
-## Documentation. ##
-## -------------- ##
-
-doc_dir		= $(srcdir)/doc
-
-libtool_1	= $(doc_dir)/libtool.1
-libtoolize_1	= $(doc_dir)/libtoolize.1
-notes_texi	= $(doc_dir)/notes.texi
-notes_txt	= $(doc_dir)/notes.txt
-
-EXTRA_DIST	+= $(doc_dir)/gendocs_template
-
-# A bug in automake 1.11.1 (at least) prevents us from using:
-#
-#   info_TEXINFOS	= $(doc_dir)/libtool.texi
-#
-# Producing the following error, even though srcdir is implicitly set:
-# "cannot open < ./$(srcdir)/doc/libtool.texi: No such file or directory"
-info_TEXINFOS		= doc/libtool.texi
-doc_libtool_TEXINFOS	= $(doc_dir)/PLATFORMS $(doc_dir)/fdl.texi \
-			  $(notes_texi)
-EXTRA_DIST	       += $(notes_txt)
-## Workaround for a texinfo bug described here:
-## http://thread.gmane.org/gmane.comp.tex.texinfo.bugs/3930
-DISTCLEANFILES	       += libtool.dvi
-
-all-local: $(notes_txt)
-
-$(notes_txt): $(notes_texi)
-	$(AM_V_GEN)$(MAKEINFO) -P '$(srcdir)/doc' --no-headers \
-	    $(MAKEINFOFLAGS) -o '$@' '$(notes_texi)'
-
-dist_man1_MANS		= $(libtool_1) $(libtoolize_1)
-MAINTAINERCLEANFILES	+= $(dist_man1_MANS)
-update_mans = \
-  PATH=".$(PATH_SEPARATOR)$$PATH"; export PATH; \
-  $(HELP2MAN) --output='$@'
-
-# It's wrong to make distributed files (e.g. $(libtool_1)) rely on
-# files created in the build tree, so instead we regenerate the
-# manual pages if the sources for the build-tree files we want to
-# run have changed.
-$(libtool_1): $(ltmain_sh)
-	$(AM_V_GEN)$(update_mans) --help-option=--help-all libtool
-$(libtoolize_1): $(libtoolize_in)
-	$(AM_V_GEN)$(update_mans) libtoolize
-
 
 ## ------------- ##
 ## Installation. ##
@@ -547,19 +489,6 @@ changelog_old		= $(srcdir)/ChangeLog.old
 thanks			= $(distdir)/THANKS
 no_thanks		= $(srcdir)/NO-THANKS
 
-# Generate ChangeLog using git log entries for as far back as
-# they are in good shape, appending manual records from earlier.
-changelog_start_date = 2011-01-01
-$(changelog): FORCE
-	$(AM_V_GEN)if test -d '$(srcdir)/.git'; then \
-	  TZ=UTC $(gitlog_to_changelog) --amend=$(git_log_fix) \
-	      --ignore-matching=Omit-from-ChangeLog. \
-	      --format='%s%n%n%b%n' \
-	      --since=$(changelog_start_date) > '$@T'; \
-	  rm -f '$@'; mv '$@T' '$@'; \
-	  cat '$(changelog_old)' >> '$@'; \
-	fi
-
 # Sort in traditional ASCII order, regardless of the current locale;
 # otherwise we may get into trouble with distinct strings that the
 # current locale considers to be equal.
@@ -567,26 +496,6 @@ ASSORT = LC_ALL=C sort
 
 # Extract all lines up to the first one starting with "##".
 prologue = perl -ne '/^\#\#/ and exit; print' $(no_thanks)
-
-# Generate THANKS using git log entries as far as possible, fixing
-# up ommisions and errors from NO-THANKS configuration.
-$(thanks): FORCE
-	$(AM_V_GEN)if test -d '$(srcdir)/.git'; then \
-	  { \
-	    $(prologue); echo; \
-	    { perl -ne '/^$$/.../^$$/ and print' $(no_thanks) \
-	      | grep -v '^$$' | perl -pe 's/  +/\0/'; \
-	      {  sed -e '1,/\#\# /d' -e '/^\#\# /d' \
-		    -e 's|[	][	 ]*|	|' < $(no_thanks) \
-		  | tr '\t' '\0'; \
-		git log --pretty=format:'%aN%x00%aE'; \
-	      } | $(ASSORT) -u; \
-	    } | $(thanks_gen) \
-	      | LC_ALL=en_US.UTF-8 sort -f; \
-	    echo; \
-	    printf ';; %s\n' 'Local Variables:' 'coding: utf-8' End:; \
-	  } > '$@'; \
-	fi
 
 ## Arrange so that .version appears only in the distribution
 ## tarball, and never in a checked-out repository.
@@ -598,13 +507,6 @@ $(dotversion):
 ## Edit the README file for alpha releases.
 EXTRA_DIST += $(edit_readme_alpha)
 re_alpha_version = '\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*[-\.][-\.0-9a-z]*\)'
-$(readme): FORCE
-	@if test -n "`expr $(VERSION) : $(re_alpha_version)`"; then \
-	  if test 0 = '$(AM_DEFAULT_VERBOSITY)' && test 1 != '$(V)'; \
-	    then echo "  GEN     " $@; \
-	  else echo "$(SHELL) $(edit_readme_alpha) $@"; fi; \
-	  $(SHELL) $(edit_readme_alpha) '$@'; \
-	fi
 
 git_commit_count = git log --pretty=oneline |wc -l |$(SED) 's|[	 ]||g'
 
@@ -639,191 +541,6 @@ uninstall-hook:
 	@p=`echo libtoolize |sed -e '$(transform)'`; \
 	echo " rm -f '$(DESTDIR)$(bindir)/$$p'"; \
 	rm -f "$(DESTDIR)$(bindir)/$$p"
-
-
-## ----------- ##
-## Test suite. ##
-## ----------- ##
-
-tests_dir	= $(top_srcdir)/tests
-package_m4	= $(tests_dir)/package.m4
-testsuite	= $(tests_dir)/testsuite
-
-# The testsuite files are evaluated in the order given here. When
-# adding new tests, make sure cmdline_wrap.at stays at the end so
-# that it can check for previous failures and skip if necessary.
-TESTSUITE	= tests/testsuite
-TESTSUITE_AT	= tests/testsuite.at \
-		  tests/configure-funcs.at \
-		  tests/libtoolize.at \
-		  tests/libtool.at \
-		  tests/demo.at \
-		  tests/pic_flag.at \
-		  tests/with-pic.at \
-		  tests/cdemo.at \
-		  tests/convenience.at \
-		  tests/depdemo.at \
-		  tests/help.at \
-		  tests/duplicate_members.at \
-		  tests/duplicate_conv.at \
-		  tests/duplicate_deps.at \
-		  tests/flags.at \
-		  tests/inherited_flags.at \
-		  tests/link-order.at \
-		  tests/link-order2.at \
-		  tests/fail.at \
-		  tests/shlibpath.at \
-		  tests/runpath-in-lalib.at \
-		  tests/static.at \
-		  tests/export.at \
-		  tests/export-def.at \
-		  tests/search-path.at \
-		  tests/indirect_deps.at \
-		  tests/archive-in-archive.at \
-		  tests/exeext.at \
-		  tests/execute-mode.at \
-		  tests/bindir.at \
-		  tests/cwrapper.at \
-		  tests/deplib-in-subdir.at \
-		  tests/infer-tag.at \
-		  tests/localization.at \
-		  tests/nocase.at \
-		  tests/install.at \
-		  tests/versioning.at \
-		  tests/destdir.at \
-		  tests/old-m4-iface.at \
-		  tests/old-ltdl-iface.at \
-		  tests/am-subdir.at \
-		  tests/lt_dlexit.at \
-		  tests/lt_dladvise.at \
-		  tests/lt_dlopen.at \
-		  tests/lt_dlopen_a.at \
-		  tests/lt_dlopenext.at \
-		  tests/ltdl-libdir.at \
-		  tests/ltdl-api.at \
-		  tests/dlloader-api.at \
-		  tests/loadlibrary.at \
-		  tests/lalib-syntax.at \
-		  tests/resident.at \
-		  tests/slist.at \
-		  tests/need_lib_prefix.at \
-		  tests/mdemo.at \
-		  tests/standalone.at \
-		  tests/subproject.at \
-		  tests/nonrecursive.at \
-		  tests/recursive.at \
-		  tests/tagdemo.at \
-		  tests/template.at \
-		  tests/ctor.at \
-		  tests/exceptions.at \
-		  tests/early-libtool.at \
-		  tests/no-executables.at \
-		  tests/deplibs-ident.at \
-		  tests/configure-iface.at \
-		  tests/f77demo.at \
-		  tests/fcdemo.at \
-		  tests/darwin.at \
-		  tests/dumpbin-symbols.at \
-		  tests/deplibs-mingw.at \
-		  tests/sysroot.at \
-		  tests/stresstest.at \
-		  tests/cmdline_wrap.at \
-		  $(NOTHING_ELSE)
-
-EXTRA_DIST     += $(testsuite) $(TESTSUITE_AT) $(package_m4)
-
-# Be sure to reexport important environment variables:
-TESTS_ENVIRONMENT = MAKE="$(MAKE)" CC="$(CC)" CFLAGS="$(CFLAGS)" \
-	CPP="$(CPP)" CPPFLAGS="$(CPPFLAGS)" LD="$(LD)" LDFLAGS="$(LDFLAGS)" \
-	LIBS="$(LIBS)" LN_S="$(LN_S)" NM="$(NM)" RANLIB="$(RANLIB)" \
-	AR="$(AR)" \
-	EGREP="$(EGREP)" FGREP="$(FGREP)" GREP="$(GREP)" SED="$(SED)" \
-	STRIP="$(STRIP)" lt_INSTALL="$(INSTALL)" \
-	MANIFEST_TOOL="$(MANIFEST_TOOL)" \
-	OBJEXT="$(OBJEXT)" EXEEXT="$(EXEEXT)" \
-	SHELL="$(SHELL)" CONFIG_SHELL="$(SHELL)" \
-	CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" CXXCPP="$(CXXCPP)" \
-	F77="$(F77)" FFLAGS="$(FFLAGS)" \
-	FC="$(FC)" FCFLAGS="$(FCFLAGS)" \
-	GCJ="$(GCJ)" GCJFLAGS="$(GCJFLAGS)" \
-	lt_cv_with_aix_soname="$(with_aix_soname)" \
-	lt_cv_to_host_file_cmd="$(to_host_file_cmd)" \
-	lt_cv_to_tool_file_cmd="$(to_tool_file_cmd)"
-
-BUILDCHECK_ENVIRONMENT = _lt_pkgdatadir="$(abs_top_srcdir)" \
-	LIBTOOLIZE="$(abs_top_builddir)/libtoolize" \
-	LIBTOOL="$(abs_top_builddir)/libtool" \
-	tst_aclocaldir="$(abs_top_srcdir)/m4"
-
-INSTALLCHECK_ENVIRONMENT = \
-	LIBTOOLIZE="$(bindir)/`echo libtoolize |$(SED) '$(program_transform_name)'`" \
-	LIBTOOL="$(bindir)/`echo libtool |$(SED) '$(program_transform_name)'`" \
-	LTDLINCL="-I$(includedir)" \
-	LIBLTDL="$(libdir)/libltdl.la" \
-	tst_aclocaldir="$(aclocaldir)"
-
-$(testsuite): $(package_m4) $(TESTSUITE_AT) Makefile.am
-	$(AM_V_GEN)$(AUTOTEST) -I '$(srcdir)' -I '$(srcdir)/tests' $(TESTSUITE_AT) -o '$@'
-
-$(package_m4): $(dotversion) Makefile.am
-	$(AM_V_GEN){ \
-	  echo '# Signature of the current package.'; \
-	  echo 'm4_define([AT_PACKAGE_NAME],      [$(PACKAGE_NAME)])'; \
-	  echo 'm4_define([AT_PACKAGE_TARNAME],   [$(PACKAGE_TARNAME)])'; \
-	  echo 'm4_define([AT_PACKAGE_VERSION],   [$(PACKAGE_VERSION)])'; \
-	  echo 'm4_define([AT_PACKAGE_STRING],    [$(PACKAGE_STRING)])'; \
-	  echo 'm4_define([AT_PACKAGE_BUGREPORT], [$(PACKAGE_BUGREPORT)])'; \
-	  echo 'm4_define([AT_PACKAGE_URL],       [$(PACKAGE_URL)])'; \
-	} > '$@'
-
-tests/atconfig: $(config_status)
-	$(AM_V_GEN)$(SHELL) '$(config_status)' '$@'
-
-DISTCLEANFILES += tests/atconfig
-
-CD_TESTDIR	= abs_srcdir=`$(lt__cd) $(srcdir) && pwd`; cd tests
-
-testsuite_deps = tests/atconfig $(srcdir)/$(TESTSUITE)
-testsuite_deps_uninstalled = $(testsuite_deps) libltdl/libltdlc.la \
-			     $(bin_SCRIPTS) $(LTDL_BOOTSTRAP_DEPS)
-
-# Hook the test suite into the check rule
-check-local: $(testsuite_deps_uninstalled)
-	$(AM_V_at)$(CD_TESTDIR); \
-	CONFIG_SHELL='$(SHELL)' '$(SHELL)' "$$abs_srcdir/$(TESTSUITE)" \
-	  $(TESTS_ENVIRONMENT) $(BUILDCHECK_ENVIRONMENT) $(TESTSUITEFLAGS)
-
-# Run the test suite on the *installed* tree.
-installcheck-local: $(testsuite_deps)
-	$(AM_V_at)$(CD_TESTDIR); \
-	CONFIG_SHELL='$(SHELL)' '$(SHELL)' "$$abs_srcdir/$(TESTSUITE)" \
-	  $(TESTS_ENVIRONMENT) $(INSTALLCHECK_ENVIRONMENT) $(TESTSUITEFLAGS) \
-	  AUTOTEST_PATH='$(exec_prefix)/bin'
-
-.PHONY: check-noninteractive-old
-check-noninteractive-old:
-	$(AM_V_at)'$(MAKE)' $(AM_MAKEFLAGS) check-TESTS TESTS='$(TESTS)'
-
-# Run only noninteractive parts of the new testsuite.
-.PHONY: check-noninteractive-new
-check-noninteractive-new: $(testsuite_deps_uninstalled)
-	$(AM_V_at)$(CD_TESTDIR); \
-	CONFIG_SHELL='$(SHELL)' '$(SHELL)' "$$abs_srcdir/$(TESTSUITE)" \
-	  $(TESTS_ENVIRONMENT) $(BUILDCHECK_ENVIRONMENT) \
-	  -k '!interactive' INNER_TESTSUITEFLAGS=',!interactive' \
-	  $(TESTSUITEFLAGS)
-
-# Run only interactive parts of the new testsuite.
-.PHONY: check-interactive
-check-interactive: $(testsuite_deps_uninstalled)
-	$(AM_V_at)$(CD_TESTDIR); \
-	CONFIG_SHELL='$(SHELL)' '$(SHELL)' "$$abs_srcdir/$(TESTSUITE)" \
-	  $(TESTS_ENVIRONMENT) $(BUILDCHECK_ENVIRONMENT) \
-	  -k interactive -k recursive INNER_TESTSUITEFLAGS=',interactive' \
-	  $(TESTSUITEFLAGS)
-
-.PHONY: check-noninteractive
-check-noninteractive: check-noninteractive-old check-noninteractive-new
 
 # We need to remove any file droppings left behind by testsuite
 clean-local:

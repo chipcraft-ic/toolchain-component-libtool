@@ -32,7 +32,7 @@ dnl Oldest automake required for bootstrap is below in AM_INIT_AUTOMAKE.
 ## Autoconf initialisation. ##
 ## ------------------------ ##
 AC_INIT([GNU Libtool],
-	m4_esyscmd([build-aux/git-version-gen .tarball-version]),
+	[2.4.6],
 	[bug-libtool@gnu.org])
 m4_ifndef([AC_PACKAGE_URL],
 	  [AC_SUBST([PACKAGE_URL], [http://www.gnu.org/s/libtool/])])
@@ -62,14 +62,6 @@ AC_CONFIG_LIBOBJ_DIR([libltdl])
 
 package_revision=`$SHELL $ac_aux_dir/git-version-gen .tarball-version`
 AC_SUBST([package_revision])
-
-## ------------------------ ##
-## Autotest initialisation. ##
-## ------------------------ ##
-
-AC_CONFIG_TESTDIR([tests])
-AC_SUBST([AUTOM4TE], [${AUTOM4TE=autom4te}])
-AC_SUBST([AUTOTEST], ['$(AUTOM4TE) --language=autotest'])
 
 
 ## ---------------------------------------- ##
@@ -174,13 +166,8 @@ AC_SUBST([with_aix_soname])dnl
 ## ---------------------- ##
 GL_INIT
 
-## ------------- ##
-## Documentation ##
-## ------------- ##
-AM_MISSING_PROG([HELP2MAN], [help2man])
-
 ## -------- ##
 ## Outputs. ##
 ## -------- ##
-AC_CONFIG_FILES([Makefile gnulib-tests/Makefile])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
