@@ -98,14 +98,12 @@ host_triplet = @host@
 @CONVENIENCE_LTDL_TRUE@am__append_3 = libltdl/libltdlc.la
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/00gnulib.m4 \
-	$(top_srcdir)/m4/autobuild.m4 \
-	$(top_srcdir)/m4/gnulib-common.m4 \
-	$(top_srcdir)/m4/gnulib-comp.m4 $(top_srcdir)/m4/libtool.m4 \
-	$(top_srcdir)/m4/ltargz.m4 $(top_srcdir)/m4/ltdl.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
-	$(top_srcdir)/m4/m4.m4 $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/autobuild.m4 \
+	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltargz.m4 \
+	$(top_srcdir)/m4/ltdl.m4 $(top_srcdir)/m4/ltoptions.m4 \
+	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
+	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/m4/m4.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
@@ -346,8 +344,7 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config-h.in \
 	$(top_srcdir)/libltdl/lt__strl.c AUTHORS COPYING ChangeLog \
 	INSTALL NEWS README TODO build-aux/compile \
 	build-aux/config.guess build-aux/config.sub build-aux/depcomp \
-	build-aux/install-sh build-aux/ltmain.sh build-aux/mdate-sh \
-	build-aux/missing build-aux/texinfo.tex
+	build-aux/install-sh build-aux/ltmain.sh build-aux/missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -395,7 +392,6 @@ ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
-ARFLAGS = @ARFLAGS@
 AS = @AS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -404,7 +400,6 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
-CONFIG_INCLUDE = @CONFIG_INCLUDE@
 CONFIG_STATUS_DEPENDENCIES = @CONFIG_STATUS_DEPENDENCIES@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
@@ -430,11 +425,6 @@ FFLAGS = @FFLAGS@
 FGREP = @FGREP@
 GCJ = @GCJ@
 GCJFLAGS = @GCJFLAGS@
-GL_LIBOBJS = @GL_LIBOBJS@
-GL_LTLIBOBJS = @GL_LTLIBOBJS@
-GLtests_LIBOBJS = @GLtests_LIBOBJS@
-GLtests_LTLIBOBJS = @GLtests_LTLIBOBJS@
-GLtests_WITNESS = @GLtests_WITNESS@
 GOC = @GOC@
 GREP = @GREP@
 INSTALL = @INSTALL@
@@ -487,7 +477,6 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
-abs_aux_dir = `$(lt__cd) '$(srcdir)/$(aux_dir)' && pwd`
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -647,6 +636,7 @@ LTDL_BOOTSTRAP_DEPS = \
 	$(lt_config_h_in) \
 	$(lt_configure)
 
+abs_aux_dir = `$(lt__cd) '$(srcdir)/$(aux_dir)' && pwd`
 ltdl_ac_aux_dir = `$(SCRIPT_ENV) $(extract_trace) AC_CONFIG_AUX_DIR $(srcdir)/libltdl/configure.ac`
 configure_edit = $(bootstrap_edit) \
 	-e '/^\. /s|@auxscriptsdir\@|'$(abs_aux_dir)'|g' \
@@ -935,12 +925,12 @@ libltdl/loaders/dyld.lo: libltdl/loaders/$(am__dirstamp) \
 
 libltdl/dyld.la: $(libltdl_dyld_la_OBJECTS) $(libltdl_dyld_la_DEPENDENCIES) $(EXTRA_libltdl_dyld_la_DEPENDENCIES) libltdl/$(am__dirstamp)
 	$(AM_V_CCLD)$(libltdl_dyld_la_LINK)  $(libltdl_dyld_la_OBJECTS) $(libltdl_dyld_la_LIBADD) $(LIBS)
+libltdl/lt__strl.$(OBJEXT): libltdl/$(am__dirstamp)
+libltdl/lt__strl.lo: libltdl/$(am__dirstamp)
 libltdl/lt__argz.$(OBJEXT): libltdl/$(am__dirstamp)
 libltdl/lt__argz.lo: libltdl/$(am__dirstamp)
 libltdl/lt__dirent.$(OBJEXT): libltdl/$(am__dirstamp)
 libltdl/lt__dirent.lo: libltdl/$(am__dirstamp)
-libltdl/lt__strl.$(OBJEXT): libltdl/$(am__dirstamp)
-libltdl/lt__strl.lo: libltdl/$(am__dirstamp)
 libltdl/loaders/libltdl_la-preopen.lo:  \
 	libltdl/loaders/$(am__dirstamp) \
 	libltdl/loaders/$(DEPDIR)/$(am__dirstamp)
